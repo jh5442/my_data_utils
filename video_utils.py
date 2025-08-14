@@ -1,41 +1,7 @@
 import cv2
 import os
 from moviepy.editor import VideoFileClip
-
-# test_03_original_path = ("/Users/jinhuang/Desktop/work/my_data/demo_for_design_and_product/"
-#                 "results/gen_omnimatte_CogVideoX-Fun-V1.5-5b-InP/test_03_removal/test_03.mp4")
-# test_03_path = ("/Users/jinhuang/Desktop/work/my_data/demo_for_design_and_product/"
-#                 "results/gen_omnimatte_CogVideoX-Fun-V1.5-5b-InP/test_03_removal/test_03_removal.mp4")
-# test_03_save_path = ("/Users/jinhuang/Desktop/work/my_data/demo_for_design_and_product/"
-#                      "results/gen_omnimatte_CogVideoX-Fun-V1.5-5b-InP/test_03_removal/test_03_removal_reshaped.mp4")
-
-# test_03_original_path = ("/Users/jinhuang/Desktop/work/my_data/demo_for_design_and_product/"
-#                 "results/gen_omnimatte_CogVideoX-Fun-V1.5-5b-InP/test_03_removal/test_03.mp4")
-# test_03_path = ("/Users/jinhuang/Desktop/work/my_data/demo_for_design_and_product/results/"
-#                 "gen_omnimatte_wan2.1_1.3B/test_03_removal.mp4")
-# test_03_save_path = ("/Users/jinhuang/Desktop/work/my_data/demo_for_design_and_product/results/"
-#                      "gen_omnimatte_wan2.1_1.3B/test_03_removal_reshaped.mp4")
-
-# test_04_original_path = ("/Users/jinhuang/Desktop/work/my_data/demo_for_design_and_product/data/"
-#                          "mt_lab_test_videos/test_04.mp4")
-# test_04_path = ("/Users/jinhuang/Desktop/work/my_data/demo_for_design_and_product/results/"
-#                 "gen_omnimatte_CogVideoX-Fun-V1.5-5b-InP/test_04_removal/casper_outputs/gradio_demo-2dcdf102-fg=-1-0001.mp4")
-# test_04_save_path = ("/Users/jinhuang/Desktop/work/my_data/demo_for_design_and_product/results/"
-#                 "gen_omnimatte_CogVideoX-Fun-V1.5-5b-InP/test_04_removal/result_reshaped.mp4")
-
-# test_04_original_path = ("/Users/jinhuang/Desktop/work/my_data/demo_for_design_and_product/data/"
-#                          "mt_lab_test_videos/test_04.mp4")
-# test_04_path = ("/Users/jinhuang/Desktop/work/my_data/demo_for_design_and_product/results/"
-#                 "gen_omnimatte_wan2.1_1.3B/test_04_removal.mp4")
-# test_04_save_path = ("/Users/jinhuang/Desktop/work/my_data/demo_for_design_and_product/results/"
-#                 "gen_omnimatte_wan2.1_1.3B/test_04_removal_reshaped.mp4")
-#
-# test_06_original_path = ("/Users/jinhuang/Desktop/work/my_data/demo_for_design_and_product/data/"
-#                          "mt_lab_test_videos/test_06.mp4")
-# test_06_path = ("/Users/jinhuang/Desktop/work/my_data/demo_for_design_and_product/results/"
-#                 "gen_omnimatte_CogVideoX-Fun-V1.5-5b-InP/test_06_removal/casper_outputs/gradio_demo-560f6581-fg=-1-0001.mp4")
-# test_06_save_path = ("/Users/jinhuang/Desktop/work/my_data/demo_for_design_and_product/results/"
-#                 "gen_omnimatte_CogVideoX-Fun-V1.5-5b-InP/test_06_removal/casper_outputs/result_reshaped.mp4")
+import numpy as np
 
 test_03_original_path = "/Users/jinhuang/Desktop/work/my_data/demo_for_design_and_product/data/mt_lab_test_videos/test_03.mp4"
 test_03_save_path = ("/Users/jinhuang/Desktop/work/my_data/demo_for_design_and_product/data/"
@@ -49,6 +15,14 @@ test_04_save_path = ("/Users/jinhuang/Desktop/work/my_data/demo_for_design_and_p
 def reshape_video(reference_video_path,
                   video_path,
                   output_video_path):
+    """
+    Adjust the W:H ratio. Needed as post-processing for some models.
+
+    :param reference_video_path:
+    :param video_path:
+    :param output_video_path:
+    :return:
+    """
 
     # Open reference video to get the desired size
     reference_video = cv2.VideoCapture(reference_video_path)
@@ -90,6 +64,13 @@ def reshape_video(reference_video_path,
 
 
 def convert_video(input_video_path, save_video_path):
+    """
+    Resize the video to 1080P.
+
+    :param input_video_path:
+    :param save_video_path:
+    :return:
+    """
     # Load video
     clip = VideoFileClip(input_video_path)
 
@@ -125,7 +106,17 @@ def convert_video(input_video_path, save_video_path):
     clip.write_videofile(save_video_path, codec="libx264", audio_codec="aac")
 
 
+
+
 def adjust_FPS(video_path, save_path, target_fps=24):
+    """
+    Adjust the FPS of a video. Needed as post-processing for some models.
+
+    :param video_path:
+    :param save_path:
+    :param target_fps:
+    :return:
+    """
     cap = cv2.VideoCapture(video_path)
     original_fps = cap.get(cv2.CAP_PROP_FPS)
     frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -222,7 +213,16 @@ def paint_video_gray_based_on_mask(original_video_path,
 
 
 
-def trim_video(original_video_path, trimmed_video_path, start_time=5):
+def trim_video_head(original_video_path, trimmed_video_path, start_time=5):
+    """
+    Trimming the beginning of the video to start at start_time second.
+    This was written because SAM2 had difficulty getting the full mask for the first 5 sec of MT test 03.
+
+    :param original_video_path:
+    :param trimmed_video_path:
+    :param start_time:
+    :return:
+    """
     cap = cv2.VideoCapture(original_video_path)
     if not cap.isOpened():
         raise IOError(f"Cannot open video: {original_video_path}")
@@ -257,31 +257,92 @@ def trim_video(original_video_path, trimmed_video_path, start_time=5):
 
 
 
+def trim_video_tail(video_path, trimmed_video_save_path, seconds_to_keep):
+    """
+    Only keeping the first seconds_to_keep second of video.
+    Mainly used for testing Sora.
+
+    :param video_path:
+    :param trimmed_video_save_path:
+    :param seconds_to_keep:
+    :return:
+    """
+    cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        raise IOError(f"Cannot open video: {video_path}")
+
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+
+    # Calculate how many frames to keep
+    frames_to_keep = int(seconds_to_keep * fps)
+    if frames_to_keep > total_frames:
+        raise ValueError(f"seconds_to_keep={seconds_to_keep}s exceeds video length")
+
+    out = cv2.VideoWriter(trimmed_video_save_path, fourcc, fps, (width, height))
+
+    frame_idx = 0
+    while frame_idx < frames_to_keep:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        out.write(frame)
+        frame_idx += 1
+
+    cap.release()
+    out.release()
+    print(f"Trimmed head saved to: {trimmed_video_save_path}")
+
+
+
+
+def process_video(original_video_path):
+
+    # Open the video file
+    cap = cv2.VideoCapture(original_video_path)
+
+    if not cap.isOpened():
+        print(f"Error: Could not open video {original_video_path}")
+        return
+
+    # Get FPS
+    fps = cap.get(cv2.CAP_PROP_FPS)
+
+    # Get total frame count
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    print(f"FPS: {fps}")
+    print(f"Total number of frames: {total_frames}")
+
+    # Release the capture object
+    cap.release()
+
+
+
 if __name__ == "__main__":
-    adjust_FPS(video_path="/Users/jinhuang/Desktop/work/my_data/results_collection/test_03_removed_8s.mp4",
-               save_path="/Users/jinhuang/Desktop/work/my_data/results_collection/test_03_removed_8s_fps_24.mp4")
+    reshape_video(reference_video_path="/Users/jinhuang/Desktop/work/my_data_and_results/test_03_and_04/test_03.mp4",
+                  video_path="/Users/jinhuang/Desktop/work/my_data_and_results/processed_data_and_results_from_models/"
+                             "vfx_test_results/light_a_video/relight_test_03_processed.mp4",
+                  output_video_path="/Users/jinhuang/Desktop/work/my_data_and_results/processed_data_and_results_from_models/"
+                                    "vfx_test_results/light_a_video/relight_test_03_reshaped.mp4")
 
-    adjust_FPS(video_path="/Users/jinhuang/Desktop/work/my_data/results_collection/test_04_removed_5s.mp4",
-               save_path="/Users/jinhuang/Desktop/work/my_data/results_collection/test_04_removed_5s_fps_24.mp4")
+    reshape_video(reference_video_path="/Users/jinhuang/Desktop/work/my_data_and_results/test_03_and_04/test_04.mp4",
+                  video_path="/Users/jinhuang/Desktop/work/my_data_and_results/processed_data_and_results_from_models/"
+                             "vfx_test_results/light_a_video/relight_test_04_processed.mp4",
+                  output_video_path="/Users/jinhuang/Desktop/work/my_data_and_results/processed_data_and_results_from_models/"
+                                    "vfx_test_results/light_a_video/relight_test_04_reshaped.mp4")
 
-    # convert_video(input_video_path="/Users/jinhuang/Desktop/work/my_data/results_collection/test_03_removed.mp4",
-    #               save_video_path="/Users/jinhuang/Desktop/work/my_data/results_collection/test_03_removed_8s.mp4")
+    # trim_video_tail(video_path="/Users/jinhuang/Desktop/work/my_data_and_results/test_03_and_04/test_03.mp4",
+    #                 trimmed_video_save_path="/Users/jinhuang/Desktop/work/my_data_and_results/test_03_and_04/test_03_5s.mp4",
+    #                 seconds_to_keep=5)
+    #
+    # trim_video_tail(video_path="/Users/jinhuang/Desktop/work/my_data_and_results/test_03_and_04/test_04.mp4",
+    #                 trimmed_video_save_path="/Users/jinhuang/Desktop/work/my_data_and_results/test_03_and_04/test_04_5s.mp4",
+    #                 seconds_to_keep=5)
 
-    # convert_video(input_video_path="/Users/jinhuang/Desktop/work/my_data/results_collection/test_04_removed.mp4",
-    #               save_video_path="/Users/jinhuang/Desktop/work/my_data/results_collection/test_04_removed_5s.mp4")
+    process_video(original_video_path="/Users/jinhuang/Desktop/work/code/Light-A-Video/input_animatediff/car.mp4")
+    process_video(original_video_path="/Users/jinhuang/Desktop/work/code/Light-A-Video/input_animatediff/man.mp4")
 
-
-    # convert_video(input_video_path=test_04_original_path,
-    #               save_video_path=test_04_save_path)
-
-    # reshape_video(reference_video_path=test_03_original_path,
-    #               video_path=test_03_path,
-    #               output_video_path=test_03_save_path)
-
-    # reshape_video(reference_video_path=test_04_original_path,
-    #               video_path=test_04_path,
-    #               output_video_path=test_04_save_path)
-
-    # reshape_video(reference_video_path=test_06_original_path,
-    #               video_path=test_06_path,
-    #               output_video_path=test_06_save_path)
