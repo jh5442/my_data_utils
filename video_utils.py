@@ -11,6 +11,12 @@ test_04_original_path = "/Users/jinhuang/Desktop/work/my_data/demo_for_design_an
 test_04_save_path = ("/Users/jinhuang/Desktop/work/my_data/demo_for_design_and_product/data/"
                      "mt_lab_test_videos/test_04_sora_9s_3_to_2.mp4")
 
+# pexel_test_video_dir = "/Users/jinhuang/Desktop/work/my_data_and_results/data/pexel_test_samples"
+# pexel_processed_dir = "/Users/jinhuang/Desktop/work/my_data_and_results/data/pexel_test_samples/processed_for_runway_testing"
+
+pexel_test_video_dir = "/Users/jinhuang/Desktop/work/my_data_and_results/data/pexel_test_samples_0919"
+pexel_processed_dir = "/Users/jinhuang/Desktop/work/my_data_and_results/data/pexel_processed_for_runway_0919"
+
 
 def reshape_video(reference_video_path,
                   video_path,
@@ -322,27 +328,52 @@ def process_video(original_video_path):
 
 
 
+
+def reshape_and_trim_video(video_folder,
+                           save_video_folder):
+    """
+
+    :param video_folder:
+    :param save_video_folder:
+    :return:
+    """
+    os.makedirs(save_video_folder, exist_ok=True)
+
+    # iterate through all files in video_folder
+    for fname in os.listdir(video_folder):
+        if not fname.lower().endswith(('.mp4', '.mov', '.avi', '.mkv')):
+            continue
+
+        video_path = os.path.join(video_folder, fname)
+        base_name, _ = os.path.splitext(fname)
+
+        # load video
+        clip = VideoFileClip(video_path)
+
+        # resize to 720P
+        width, height = clip.size
+
+        if width > height:
+            clip_resized = clip.resize(newsize=(1080, 720))
+        else:
+            clip_resized = clip.resize(newsize=(720, 1080))
+
+        # first 5 seconds
+        clip_5s = clip_resized.subclip(0, min(5, clip_resized.duration))
+        save_path_5s = os.path.join(save_video_folder, f"{base_name}_720p_5s.mp4")
+        clip_5s.write_videofile(save_path_5s, codec="libx264", audio_codec="aac")
+
+        # first 10 seconds
+        # clip_10s = clip_resized.subclip(0, min(10, clip_resized.duration))
+        # save_path_10s = os.path.join(save_video_folder, f"{base_name}_720p_10s.mp4")
+        # clip_10s.write_videofile(save_path_10s, codec="libx264", audio_codec="aac")
+
+        clip.close()
+        clip_resized.close()
+        clip_5s.close()
+        # clip_10s.close()
+
+
 if __name__ == "__main__":
-    reshape_video(reference_video_path="/Users/jinhuang/Desktop/work/my_data_and_results/test_03_and_04/test_03.mp4",
-                  video_path="/Users/jinhuang/Desktop/work/my_data_and_results/processed_data_and_results_from_models/"
-                             "vfx_test_results/light_a_video/relight_test_03_processed.mp4",
-                  output_video_path="/Users/jinhuang/Desktop/work/my_data_and_results/processed_data_and_results_from_models/"
-                                    "vfx_test_results/light_a_video/relight_test_03_reshaped.mp4")
-
-    reshape_video(reference_video_path="/Users/jinhuang/Desktop/work/my_data_and_results/test_03_and_04/test_04.mp4",
-                  video_path="/Users/jinhuang/Desktop/work/my_data_and_results/processed_data_and_results_from_models/"
-                             "vfx_test_results/light_a_video/relight_test_04_processed.mp4",
-                  output_video_path="/Users/jinhuang/Desktop/work/my_data_and_results/processed_data_and_results_from_models/"
-                                    "vfx_test_results/light_a_video/relight_test_04_reshaped.mp4")
-
-    # trim_video_tail(video_path="/Users/jinhuang/Desktop/work/my_data_and_results/test_03_and_04/test_03.mp4",
-    #                 trimmed_video_save_path="/Users/jinhuang/Desktop/work/my_data_and_results/test_03_and_04/test_03_5s.mp4",
-    #                 seconds_to_keep=5)
-    #
-    # trim_video_tail(video_path="/Users/jinhuang/Desktop/work/my_data_and_results/test_03_and_04/test_04.mp4",
-    #                 trimmed_video_save_path="/Users/jinhuang/Desktop/work/my_data_and_results/test_03_and_04/test_04_5s.mp4",
-    #                 seconds_to_keep=5)
-
-    process_video(original_video_path="/Users/jinhuang/Desktop/work/code/Light-A-Video/input_animatediff/car.mp4")
-    process_video(original_video_path="/Users/jinhuang/Desktop/work/code/Light-A-Video/input_animatediff/man.mp4")
-
+    reshape_and_trim_video(video_folder=pexel_test_video_dir,
+                           save_video_folder=pexel_processed_dir)
